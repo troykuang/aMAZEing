@@ -15,13 +15,15 @@
 #include <string>
 using namespace std;
 
-Cell::Cell(){
+Cell::Cell(int a, int b){
 	visit = false;//not visit yet
 	//true for has wall
 	up = true;
 	down = true;
 	left = true;
 	right = true;
+	x = a;
+	y = b;
 }
 
 Cell::~Cell(){
@@ -46,6 +48,14 @@ void Cell::changeLeft(bool input){
 
 void Cell::changeRight(bool input){
 	right = input;
+}
+
+int Cell::getX(){
+	return x;
+}
+
+int Cell::getY(){
+	return y;
 }
 
 bool Cell::getVisit() {
@@ -80,10 +90,10 @@ string Cell::toString() {
 	return result; 
 }
 
-int main(int argc, char const *argv[])
+/*int main(int argc, char const *argv[])
 {
 	Cell* c = new Cell();
 	cout << c->toString();
 	//printf("%s\n", c->toString());
 	return 0;
-}
+}*/
