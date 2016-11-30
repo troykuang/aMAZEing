@@ -1,13 +1,3 @@
-#ifdef __APPLE__
-#  include <OpenGL/gl.h>
-#  include <OpenGL/glu.h>
-#  include <GLUT/glut.h>
-#else
-#  include <GL/gl.h>
-#  include <GL/glu.h>
-#  include <GL/freeglut.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "Maze.h"
@@ -214,10 +204,27 @@ int Maze::randMaze(){
 	return rand() % size;//from 0-size-1
 }
 
-int main(int argc, char const *argv[])
+bool Maze::getUp(int x, int y){
+	return grid[x][y]->getUp();
+}
+
+bool Maze::getDown(int x, int y){
+	return grid[x][y]->getDown();
+}
+
+bool Maze::getLeft(int x, int y){
+	return grid[x][y]->getLeft();
+}
+
+bool Maze::getRight(int x, int y){
+	return grid[x][y]->getRight();
+}
+
+/*int main(int argc, char const *argv[])
 {
 	Maze *m = new Maze(10);
 	m->toString();
 	return 0;
 }
 
+*/

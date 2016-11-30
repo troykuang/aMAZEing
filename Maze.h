@@ -15,13 +15,18 @@ public:
 	~Maze();
 	int getSize();
 	void toString();
+	bool getUp(int x, int y);
+	bool getDown(int x, int y);
+	bool getLeft(int x, int y);
+	bool getRight(int x, int y);
 	int startX, startY, endX, endY;
+	
 
 private: 
-	int size = 0;
+	int size;
+	Cell* grid[500][500];
 	bool checkNull(int in[4][2]);
 	int randMaze();
-	Cell* grid[500][500];
 	void initGrid();
 	void path();
 	void walk(int x, int y, stack<Cell*> s);
