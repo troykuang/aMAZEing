@@ -5,11 +5,12 @@
 
 #changing platform dependant stuff, do not change this
 # Linux (default)
-LDFLAGS = -lGL -lGLU -lglut
+LDFLAGS = -lGL -lGLU -lglut 
 CFLAGS=-g -Wall -std=c++11
 CC=g++
-EXEEXT=
+EXEEXT= .x
 RM=rm
+
 
 # Windows (cygwin)
 ifeq "$(OS)" "Windows_NT"
@@ -17,7 +18,7 @@ ifeq "$(OS)" "Windows_NT"
 	RM=del #rm command for windows powershell
     LDFLAGS = -lfreeglut -lglu32 -lopengl32
 else
-	# OS X
+# OS X
 	OS := $(shell uname)
 	ifeq ($(OS), Darwin)
 	        LDFLAGS = -framework Carbon -framework OpenGL -framework GLUT
@@ -25,11 +26,13 @@ else
 endif
 
 #change the 't1' name to the name you want to call your application
-PROGRAM_NAME= Maze.x
+PROGRAM_NAME = 3GC3_Project
 
+# all: $(PROGRAM_NAME_2) $(PROGRAM_NAME)
+all: $(PROGRAM_NAME)
+	./$(PROGRAM_NAME)
 #run target to compile and build, and then launch the executable
-run: $(PROGRAM_NAME)  
-	./$(PROGRAM_NAME)$(EXEEXT)
+
 
 
 #when adding additional source files, such as boilerplateClass.cpp
@@ -37,7 +40,14 @@ run: $(PROGRAM_NAME)
 #ie. boilerplateClass.o and yourFile.o
 #make will automatically know that the objectfile needs to be compiled
 #form a cpp source file and find it itself :)
-$(PROGRAM_NAME): Cell.cpp Maze.cpp
+$(PROGRAM_NAME): logic.o graphics.o walls.o Maze.o Cell.o
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+
+# $(PROGRAM_NAME_2): main.o interface.o
+# 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+
 clean:
-	$(RM) *.o $(PROGRAM_NAME)$(EXEEXT)
+	$(RM) *.o $(PROGRAM_NAME) #$(PROGRAM_NAME_2)
+
+
+
