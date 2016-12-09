@@ -10,15 +10,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "logic.h"
-#include "walls.h"
 #include "Maze.h"
 #include "Cell.h"
-
-WallBoard w;
+#include "Arrow.h"
 HeightMap map;
 int size = 10;
 Maze *m = new Maze(size);
-
+Arrow *a = new Arrow();
 
 //for the camera
 float camPos[] = {map.xSize/4, map.ySize/4, 20*map.heightMax};
@@ -74,12 +72,6 @@ void init(void)
 	glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
-
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	gluPerspective(45, 1, 1, 500);
 
 
 	//ENABLING THE LIGHTING YAY
@@ -369,21 +361,20 @@ void display(void)
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glMatrixMode(GL_MODELVIEW);
+
+	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
+
+	gluPerspective(45, 1, 1, 500);
+	glMatrixMode(GL_MODELVIEW); 
+	glLoadIdentity(); 
+	gluLookAt(camPos[0], camPos[1], camPos[2], map.xSize/4,map.ySize/4,2*map.heightMax, 0,1,0);
 	glLightfv(GL_LIGHT0, GL_POSITION, light_pos0); 
 	glLightfv(GL_LIGHT1, GL_POSITION, light_pos1); 
-
 
 	glPushMatrix();
 	glRotatef(angleX, 1, 0, 0);
 	glRotatef(angleY, 0, 1, 0);
-
-	
-
-
-
-	gluLookAt(camPos[0], camPos[1], camPos[2], map.xSize/4,map.ySize/4,2*map.heightMax, 0,1,0);
     
 	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //gl_FILL
@@ -393,14 +384,16 @@ void display(void)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  m_diff); 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  m_spec); 
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  shiny); 
-
+	
 	drawTerrainQuad();
 	drawWalls();
 	
-			
+	glPopMatrix();
+	glFlush();
+	a->drawArrow('E');	
 	glutSwapBuffers();
 	
-	glPopMatrix();
+	
 }
 
 //add create menu to main()
