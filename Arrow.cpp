@@ -103,7 +103,7 @@ void Arrow::drawArrow(char dir){
     gluOrtho2D(0, 700, 0, 700); 
     glMatrixMode(GL_MODELVIEW); 
     glLoadIdentity(); 
-    glRasterPos2i(700, 720-height); 
+    glRasterPos2i(700, 700-height); 
     glPixelZoom(-1, 1); 
     switch(dir) {
         case 'N':            
