@@ -11,18 +11,18 @@ using namespace std;
 HeightMap::HeightMap(){
 	xSize = 250;
 	ySize = 250;
-	heightMax = 10;
+	heightMax = 3;
 	for(int i=0; i<xSize; i++){
 		for(int j=0; j<ySize; j++){
 			terrainMap[i][j] = 0.0;
 		}
 	}
-	cout<<"obj made"<<endl;
+	
 
 
 	srand (static_cast <unsigned> (time(0)));
 
-	numOfCircles = 15;
+	numOfCircles = 40;
 	constructCircleAlg();
 
 }
@@ -38,7 +38,7 @@ void HeightMap::createCrater(int x, int y){
 
 
 	for (int p = 0; p < numOfCircles; p++ ){	//go through the circles to create the terrain
-	circlesize = -(rand() % (((xSize+ySize)/2)/4) + 6); //if the circles are too small its just going to look flat with bumps
+	circlesize = -(rand() % (((xSize+ySize)/4)/6) + 1); //if the circles are too small its just going to look flat with bumps
 	circlex = x;
 	circley = y;
 
@@ -76,7 +76,7 @@ void HeightMap::createCircle(int x, int y){
 	circley = y;
 
 
-		for(int i=0; i< xSize; i ++){
+		for(int i=0; i < xSize; i ++){
 			for(int j=0; j < ySize; j ++){
 				//do something to make the heightmap (get the z (height) value)
 
@@ -111,8 +111,8 @@ void HeightMap::constructCircleAlg(){
 	circley = rand () % ySize;
 
 
-		for(int i=0; i< xSize; i ++){
-			for(int j=0; j < ySize; j ++){
+		for(int i=0; i != xSize; i ++){
+			for(int j=0; j != ySize; j ++){
 				//do something to make the heightmap (get the z (height) value)
 
 				double distBetween = sqrt(pow((circlex-i),2) + pow((circley - j),2));//the distance between (circlex, circley) and the point (i,j)
@@ -130,7 +130,7 @@ void HeightMap::constructCircleAlg(){
 
 
 	}//end of the constuction
-	cout<<"end of construction"<<endl;
+	
 }
 
 void HeightMap::print(){

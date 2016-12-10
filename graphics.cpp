@@ -17,16 +17,16 @@
 HeightMap map;
 int size = 10;
 Maze *m = new Maze(size);
-int wallH = 2;
 Arrow *a = new Arrow();
 float rotX;
 int w2;
+int wallH = 2;
 int colourFlag = 0;//0 = M1, 1 = M2, 2 = M3
+
 //for the camera
 float camPos[3] = {25,18,8};
 float angleX = 0.0f;
 float angleY = 0.0f;
-
 
 //to do the lighting for Lighting 1
 float light_pos0[] =  {map.xSize + 1700,  map.ySize/2 ,  2900,  1.0};
@@ -41,18 +41,6 @@ float diff1[4] = {0.8, 0.8, 0.8, 1};
 float spec1[4] = {0.5, 0.5, 0.5, 1}; 
 
 
-//The terrain material, obsidial
-float m_amb[] = {0.05375, 0.05, 0.06625, 1}; 
-float m_diff[] = {0.18275, 0.17, 0.22525, 1}; 
-float m_spec[] = {0.332741, 0.328634, 0.346435, 1}; 
-float shiny = 0.3; 
-
-//The wall material, chrome
-
-float mW_amb[] = {0.25, 0.25, 0.25, 1}; 
-float mW_diff[] = {0.4, 0.4, 0.4, 1}; 
-float mW_spec[] = {0.774597, 0.774597,0.774597, 1}; 
-float Wshiny = 0.6; 
 
 //atom material center sphere
 float atom_amb[] = {0,0,0,1};
@@ -65,7 +53,6 @@ float atom_br_amb[] = {0.02, 0.02, 0.02, 1};
 float atom_br_diff[] = { 0.01, 0.01, 0.01, 1};
 float atom_br_spec[] = {0.4,0.4,0.4,1};
 float atom_br_shiny = 0.078125;
-
 
 
 //material for ball
@@ -89,22 +76,228 @@ int lightState = 1;
 float ballPos[3]={0,0,0};
 int balli,ballj;
 
+GLubyte* snow;
+GLubyte* ice;
+GLubyte* grass;
+GLubyte* brain;
+GLubyte* dirt;
+GLubyte* sand;
+GLubyte* wood;
+GLubyte* candy;
+GLubyte* cells;
+GLubyte* drake;
+int width, height, Tmax;
+GLuint myTex[10];
+bool cheat;
+
+
+GLubyte* LoadPPM(char* file, int* width, int* height, int* Tmax)
+{
+    GLubyte* img;
+    FILE *fd;
+    int n, m;
+    int  k, nm;
+    char c;
+    int i;
+    char b[100];
+    float s;
+    int red, green, blue;
+    
+    /* first open file and check if it's an ASCII PPM (indicated by P3 at the start) */
+    fd = fopen(file, "r");
+    fscanf(fd,"%[^\n] ",b);
+    if(b[0]!='P'|| b[1] != '3')
+    {
+        printf("%s is not a PPM file!\n",file);
+        exit(0);
+    }
+    printf("%s is a PPM file\n", file);
+    fscanf(fd, "%c",&c);
+    
+    /* next, skip past the comments - any line starting with #*/
+    while(c == '#')
+    {
+        fscanf(fd, "%[^\n] ", b);
+        printf("%s\n",b);
+        fscanf(fd, "%c",&c);
+    }
+    ungetc(c,fd);
+    
+    /* now get the dimensions and max colour value from the snow */
+    fscanf(fd, "%d %d %d", &n, &m, &k);
+    
+    printf("%d rows  %d columns  max value= %d\n",n,m,k);
+    
+    /* calculate number of pixels and allocate storage for this */
+    nm = n*m;
+    img = (GLubyte*)malloc(3*sizeof(GLuint)*nm);
+    s=255.0/k;
+    
+    /* for every pixel, grab the read green and blue values, storing them in the snow data array */
+    for(i=0;i<nm;i++)
+    {
+        fscanf(fd,"%d %d %d",&red, &green, &blue );
+        img[3*nm-3*i-3]=red*s;
+        img[3*nm-3*i-2]=green*s;
+        img[3*nm-3*i-1]=blue*s;
+    }
+    
+    /* finally, set the "return parameters" (width, height, max) and return the snow array */
+    *width = n;
+    *height = m;
+    *Tmax = k;
+    
+    return img;
+}
+
+void initTexture(void){
+	glGenTextures(9, myTex);
+    
+	//textures
+    glBindTexture(GL_TEXTURE_2D, myTex[0]);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    
+    
+
+    snow = LoadPPM("snow.ppm",&width, &height, &Tmax);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, snow);
+    
+    
+    //ice texture
+    glBindTexture(GL_TEXTURE_2D, myTex[1]);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+
+    ice = LoadPPM("ice.ppm",&width, &height,&Tmax);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, ice);
+
+    //grass texture
+    glBindTexture(GL_TEXTURE_2D, myTex[2]);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+
+    grass = LoadPPM("grass.ppm",&width, &height,&Tmax);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, grass);
+
+    //stone texture
+    glBindTexture(GL_TEXTURE_2D, myTex[3]);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+
+    brain = LoadPPM("brain.ppm",&width, &height,&Tmax);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, brain);
+
+    //dirt texture
+    glBindTexture(GL_TEXTURE_2D, myTex[4]);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+
+    dirt = LoadPPM("dirt.ppm",&width, &height,&Tmax);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, dirt);
+
+    //sand
+    glBindTexture(GL_TEXTURE_2D, myTex[5]);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+
+    sand = LoadPPM("sand.ppm",&width, &height,&Tmax);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, sand);
+
+    //wood
+    glBindTexture(GL_TEXTURE_2D, myTex[6]);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+
+    wood = LoadPPM("wood.ppm",&width, &height,&Tmax);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, wood);
+
+    //candy
+    glBindTexture(GL_TEXTURE_2D, myTex[7]);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+
+    candy = LoadPPM("candy.ppm",&width, &height,&Tmax);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, candy);
+    
+	//cells
+    glBindTexture(GL_TEXTURE_2D, myTex[8]);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+
+    cells = LoadPPM("cells.ppm",&width, &height,&Tmax);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, cells);
+
+    //drake
+    glBindTexture(GL_TEXTURE_2D, myTex[9]);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+
+    drake = LoadPPM("drake.ppm",&width, &height,&Tmax);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, drake);
+    
+
+
+    
+    
+    
+    
+    
+    glMatrixMode(GL_TEXTURE);
+    glScalef(1,-1,-1);
+
+
+
+}
+
 void updateBallMapPos(){
 	ballPos[0] = 25 + 4*balli +1;
 	ballPos[1] = 25 + 4*ballj +1;
 	ballPos[2] = 1 + map.terrainMap[balli*4+26][ballj*4+26];
 }
 
-
 void init(void)
 {
 	glClearColor(0.118, 0.565, 1.000, 1);
 	glColor3f(1, 1, 1);
 
+	cheat = false;
+
 
 	glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
+
+	glEnable(GL_DEPTH_TEST);
 
 
 	//ENABLING THE LIGHTING YAY
@@ -124,7 +317,6 @@ void init(void)
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, diff1); 
 	glLightfv(GL_LIGHT1, GL_SPECULAR, spec1); 
     
-
 }
 
 
@@ -211,20 +403,44 @@ void getNormal(int v0x,int v0y,int v0z,int v1x,int v1y,int v1z,int v2x,int v2y,i
 
 
 void drawTerrainQuad(){	//for drawing quads
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  m_amb); 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  m_diff); 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  m_spec); 
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  shiny); 
-	glShadeModel(GL_FLAT);
+	switch(size){
+		case 10:
+			glBindTexture(GL_TEXTURE_2D, myTex[0]);
+			break;
+		case 20:
+			glBindTexture(GL_TEXTURE_2D, myTex[4]);
+			break;
+		case 30:
+			glBindTexture(GL_TEXTURE_2D, myTex[5]);
+			break;
+		case 40:
+			glBindTexture(GL_TEXTURE_2D, myTex[0]);
+			break;
+		case 50:
+			glBindTexture(GL_TEXTURE_2D, myTex[8]);
+			break;
+	}
+	//glBindTexture(GL_TEXTURE_2D, myTex[0]);
 
 		for(int i =0; i< map.xSize; i++){
 			glBegin(GL_QUAD_STRIP);
 			
 			for(int j = 0; j< map.ySize; j++ ){
-
+					if(j % 2 == 0){
+						glTexCoord2f(0.0, 0.0);
+					}
+					else{
+						glTexCoord2f(1.0, 1.0);
+					}
 					glVertex3f(i,j,map.terrainMap[i][j]);
 					normalFormQuad(i,j);
 					glNormal3fv(norm);
+					if(j % 2 == 0){
+						glTexCoord2f(0.0, 1.0);
+					}
+					else{
+						glTexCoord2f(1.0, 0.0);
+					}
 					glVertex3f(i+1,j,map.terrainMap[i+1][j]);
 
 				
@@ -234,127 +450,215 @@ void drawTerrainQuad(){	//for drawing quads
 }
 
 void fenceHorizontal(int p, int q){
+		switch(size){
+		case 10:
+			glBindTexture(GL_TEXTURE_2D, myTex[1]);
+			break;
+		case 20:
+			glBindTexture(GL_TEXTURE_2D, myTex[2]);
+			break;
+		case 30:
+			glBindTexture(GL_TEXTURE_2D, myTex[6]);
+			break;
+		case 40:
+			glBindTexture(GL_TEXTURE_2D, myTex[7]);
+			break;
+		case 50:
+			glBindTexture(GL_TEXTURE_2D, myTex[3]);
+			break;
+	}
+	if(cheat){
+		glBindTexture(GL_TEXTURE_2D, myTex[9]);
+	}
 	int x = p*4;
 	int y = q*4;
 	float verts [8][3] = {{x-2,y+2,map.terrainMap[x-2+25][y+2+25]},
-							{x-2,y+2,map.terrainMap[x-2+25][y+2+25]+wallH},
-							{x+2,y+2,map.terrainMap[x+2+25][y+2+25]+wallH},			
+							{x-2,y+2,map.terrainMap[x-2+25][y+2+25]+10},
+							{x+2,y+2,map.terrainMap[x+2+25][y+2+25]+10},			
 							{x+2,y+2,map.terrainMap[x+2+25][y+2+25]},
 							{x-2,y+3,map.terrainMap[x-2+25][y+3+25]},
-							{x-2,y+3,map.terrainMap[x-2+25][y+3+25]+wallH},
-							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+wallH},
+							{x-2,y+3,map.terrainMap[x-2+25][y+3+25]+10},
+							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+10},
 							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]} };
 
 
 	glBegin(GL_POLYGON);
 		getNormal(verts[0][0],verts[0][1],verts[0][2],verts[3][0],verts[3][1],verts[3][2],verts[2][0],verts[2][1],verts[2][2],verts[1][0],verts[1][1],verts[1][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[0]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[3]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[2]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[1]);
 	glEnd();
 	glBegin(GL_POLYGON);
 		getNormal(verts[3][0],verts[3][1],verts[3][2],verts[7][0],verts[7][1],verts[7][2],verts[6][0],verts[6][1],verts[6][2],verts[2][0],verts[2][1],verts[2][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[3]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[7]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[6]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[2]);
 	glEnd();
 	glBegin(GL_POLYGON);
 		getNormal(verts[4][0],verts[4][1],verts[4][2],verts[5][0],verts[5][1],verts[5][2],verts[6][0],verts[6][1],verts[6][2],verts[7][0],verts[7][1],verts[7][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[4]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[5]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[6]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[7]);
 	glEnd();
 	glBegin(GL_POLYGON);
 		getNormal(verts[4][0],verts[4][1],verts[4][2],verts[0][0],verts[0][1],verts[0][2],verts[1][0],verts[1][1],verts[1][2],verts[5][0],verts[5][1],verts[5][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[4]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[0]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[1]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[5]);
 	glEnd();
 	glBegin(GL_POLYGON);
 		getNormal(verts[1][0],verts[1][1],verts[1][2],verts[2][0],verts[2][1],verts[2][2],verts[6][0],verts[6][1],verts[6][2],verts[5][0],verts[5][1],verts[5][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[1]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[2]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[6]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[5]);
 	glEnd();
 	glBegin(GL_POLYGON);
 		getNormal(verts[0][0],verts[0][1],verts[0][2],verts[4][0],verts[4][1],verts[4][2],verts[7][0],verts[7][1],verts[7][2],verts[3][0],verts[3][1],verts[3][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[0]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[4]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[7]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[3]);
 	glEnd();
 
 }
 
 void fenceVertical(int p, int q){
+	switch(size){
+		case 10:
+			glBindTexture(GL_TEXTURE_2D, myTex[1]);
+			break;
+		case 20:
+			glBindTexture(GL_TEXTURE_2D, myTex[2]);
+			break;
+		case 30:
+			glBindTexture(GL_TEXTURE_2D, myTex[6]);
+			break;
+		case 40:
+			glBindTexture(GL_TEXTURE_2D, myTex[7]);
+			break;
+		case 50:
+			glBindTexture(GL_TEXTURE_2D, myTex[3]);
+			break;
+	}
+	if(cheat){
+		glBindTexture(GL_TEXTURE_2D, myTex[9]);
+	}
 	int x = p*4;
 	int y = q*4;
 	float verts [8][3] = {{x+2,y+3,map.terrainMap[x+2+25][y+3+25]},
-							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+wallH},
-							{x+2,y-2,map.terrainMap[x+2+25][y-2+25]+wallH},			
+							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+10},
+							{x+2,y-2,map.terrainMap[x+2+25][y-2+25]+10},			
 							{x+2,y-2,map.terrainMap[x+2+25][y-2+25]},
 							{x+3,y+3,map.terrainMap[x+3+25][y+3+25]},
-							{x+3,y+3,map.terrainMap[x+3+25][y+3+25]+wallH},
-							{x+3,y-2,map.terrainMap[x+3+25][y-2+25]+wallH},
+							{x+3,y+3,map.terrainMap[x+3+25][y+3+25]+10},
+							{x+3,y-2,map.terrainMap[x+3+25][y-2+25]+10},
 							{x+3,y-2,map.terrainMap[x+3+25][y-2+25]} };
 
 	glBegin(GL_POLYGON);
 		getNormal(verts[0][0],verts[0][1],verts[0][2],verts[3][0],verts[3][1],verts[3][2],verts[2][0],verts[2][1],verts[2][2],verts[1][0],verts[1][1],verts[1][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[0]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[3]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[2]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[1]);
 	glEnd();
 	glBegin(GL_POLYGON);
 		getNormal(verts[3][0],verts[3][1],verts[3][2],verts[7][0],verts[7][1],verts[7][2],verts[6][0],verts[6][1],verts[6][2],verts[2][0],verts[2][1],verts[2][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[3]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[7]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[6]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[2]);
 	glEnd();
 	glBegin(GL_POLYGON);
 		getNormal(verts[4][0],verts[4][1],verts[4][2],verts[5][0],verts[5][1],verts[5][2],verts[6][0],verts[6][1],verts[6][2],verts[7][0],verts[7][1],verts[7][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[4]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[5]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[6]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[7]);
 	glEnd();
 	glBegin(GL_POLYGON);
 		getNormal(verts[4][0],verts[4][1],verts[4][2],verts[0][0],verts[0][1],verts[0][2],verts[1][0],verts[1][1],verts[1][2],verts[5][0],verts[5][1],verts[5][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[4]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[0]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[1]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[5]);
 	glEnd();
 	glBegin(GL_POLYGON);
 		getNormal(verts[1][0],verts[1][1],verts[1][2],verts[2][0],verts[2][1],verts[2][2],verts[6][0],verts[6][1],verts[6][2],verts[5][0],verts[5][1],verts[5][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[1]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[2]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[6]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[5]);
 	glEnd();
 	glBegin(GL_POLYGON);
 		getNormal(verts[0][0],verts[0][1],verts[0][2],verts[4][0],verts[4][1],verts[4][2],verts[7][0],verts[7][1],verts[7][2],verts[3][0],verts[3][1],verts[3][2]);
 		glNormal3fv(norm);
+		glTexCoord2f(0.0, 0.0);
 		glVertex3fv(verts[0]);
+		glTexCoord2f(0.0, 1.0);
 		glVertex3fv(verts[4]);
+		glTexCoord2f(1.0, 1.0);
 		glVertex3fv(verts[7]);
+		glTexCoord2f(1.0, 0.0);
 		glVertex3fv(verts[3]);
 	glEnd();
 
@@ -362,7 +666,8 @@ void fenceVertical(int p, int q){
 
 void drawAtom(){
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	
+	glColor3f(1,0,0);
+
 	
 	glPushMatrix();
 
@@ -371,9 +676,8 @@ void drawAtom(){
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, atom_spec ); 
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  atom_shiny); 
 
-	//HERE IS WHERE WE TRANSLATE IT TO THE COORDINATES OF THE KEY!!
-	glTranslatef(m->endX*4 +1, m->endY*4 +1, map.terrainMap[m->endX*4+26][m->endY*4+26]+1); 
-	//glTranslatef(2,2, map.terrainMap[2][2]+3); //this will have int x, int y that is the key location BUT MULTIPLIED BY 4
+	
+	glTranslatef(m->endX*4 +1, (m->endY+1)*4 +1, map.terrainMap[m->endX*4+26][m->endY*4+26]+1); 
 	glRotatef(rotX,0,0,1);
 	glScalef(1+(cos(rotX)/15),1+(cos(rotX)/15),1+(cos(rotX)/15));
 
@@ -417,13 +721,7 @@ void drawAtom(){
 
 void drawWalls(){
 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  mW_amb); 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  mW_diff); 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  mW_spec); 
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  Wshiny); 
-
 	glPushMatrix();
-	//glTranslatef(25,25,0);
 
 	for (int i = 0; i < m->getSize(); i++) {
 		for (int j = 0; j < m->getSize(); j++) {
@@ -453,7 +751,6 @@ void drawWalls(){
 
 	glPopMatrix();
 }
-
 void drawSphere(){
 	switch(colourFlag) {
 		case 0:
@@ -496,8 +793,9 @@ void updateCamPos(){
 
 void display(void)
 {
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearDepth(1);
+    glClearColor (0.0,0.0,0.0,1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
 	glMatrixMode(GL_PROJECTION);
@@ -510,8 +808,11 @@ void display(void)
 	gluLookAt(camPos[0], camPos[1], camPos[2], ballPos[0],ballPos[1],ballPos[2]+2, 0,0,1);
 	printf("camPos:%f,%f,%f\n",camPos[0], camPos[1], camPos[2]);
 	printf("ballPos:%f,%f,%f\n",ballPos[0],ballPos[1],ballPos[2]);
-
+	
+	glDisable(GL_COLOR_MATERIAL);
 	drawSphere();
+	glEnable(GL_COLOR_MATERIAL);
+	
 	glLightfv(GL_LIGHT0, GL_POSITION, light_pos0); 
 	glLightfv(GL_LIGHT1, GL_POSITION, light_pos1); 
 
@@ -522,24 +823,30 @@ void display(void)
 		
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //gl_FILL
 
-								//applying the material 
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  m_amb); 
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  m_diff); 
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  m_spec); 
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  shiny); 
-		
+		glDisable(GL_COLOR_MATERIAL);
+		glEnable(GL_TEXTURE_2D);
 		drawTerrainQuad();
+		glDisable(GL_TEXTURE_2D);
+		glEnable(GL_COLOR_MATERIAL);
+
+		
+
 		glPushMatrix();
 			glTranslatef(25,25,0);
+			glDisable(GL_COLOR_MATERIAL);
+			glEnable(GL_TEXTURE_2D);
+			
 			drawWalls();
+			glDisable(GL_TEXTURE_2D);
+			glEnable(GL_COLOR_MATERIAL);
 			drawAtom();
 		glPopMatrix();
-		//draw balls here using colour flag
-		//eg. drawBall(colourFlag)
+		
 	glPopMatrix();
 
-	glFlush();//all 3D scene drawing before this point
-	a->drawArrow('E');//switch to 2d scene drawing 	
+
+	glFlush();
+	a->drawArrow('E');	
 	glutSwapBuffers();
 	
 	
@@ -612,7 +919,6 @@ void display_2(void){
 	glFlush();
 }
 
-
 //add create menu to main()
 void menuProc(int value){
 	switch(value) {
@@ -683,9 +989,9 @@ void createOurMenu(){
 	glutAddSubMenu("Size", subMenu_id1);
 	glutAddMenuEntry("Restart with current size", 1);
 	glutAddMenuEntry("Quit", 2);
-	glutAddMenuEntry("M1 Ball", 8);
-	glutAddMenuEntry("M2 Ball", 9);
-	glutAddMenuEntry("M3 Ball", 10);
+	glutAddMenuEntry("Skin 1", 8);
+	glutAddMenuEntry("Skin 2", 9);
+	glutAddMenuEntry("Skin 3", 10);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
@@ -707,6 +1013,11 @@ void keyboard(unsigned char key, int x, int y)
 		case 'f':
 		case 'F':
 			map.reset();
+			glutPostRedisplay();
+			break;
+		case 'D':
+		case 'd':
+			cheat = !cheat;
 			glutPostRedisplay();
 			break;
 		case 'l':
@@ -732,6 +1043,7 @@ void keyboard(unsigned char key, int x, int y)
 					lightState = 1;
 					glutPostRedisplay();
 					break;
+
 
 		}
 
@@ -851,6 +1163,7 @@ void special(int key, int x, int y)
 
 
 
+
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);		//starts up GLUT
@@ -861,7 +1174,15 @@ int main(int argc, char** argv)
 	map.constructCircleAlg();
 	map.xSize = (size*4)+50;
 	map.ySize = (size*4)+50;
-	rotX = 0;	
+	rotX = 0;
+
+
+
+
+
+	
+
+	
 	
 	glutInitWindowSize(700, 700);
 	glutInitWindowPosition(100, 100);
@@ -879,7 +1200,7 @@ int main(int argc, char** argv)
 	glutSpecialFunc(special);
 	glutTimerFunc(0 , FPS, 0);
 
-	glEnable(GL_DEPTH_TEST);
+	initTexture();
 	init();
 
 
@@ -888,10 +1209,13 @@ int main(int argc, char** argv)
 	glutInitWindowPosition(900, 200);
 	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
 	w2 = glutCreateWindow(argv[0]);
-	glutSetWindowTitle("2D_Map");
+	glutSetWindowTitle("Labyrinth Map");
 	
 	
 	glutDisplayFunc(display_2);
+	
+
+
 	glutMainLoop();				//starts the event loop
 
 	return(0);					//return may not be necessary on all compilers
