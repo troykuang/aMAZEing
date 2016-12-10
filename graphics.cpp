@@ -17,12 +17,13 @@
 HeightMap map;
 int size = 10;
 Maze *m = new Maze(size);
+int wallH = 2;
 Arrow *a = new Arrow();
 float rotX;
 int w2;
-int colourFlag = 0;//0 = red, 1 = green, 2 = blue
+int colourFlag = 0;//0 = M1, 1 = M2, 2 = M3
 //for the camera
-float camPos[] = {map.xSize/4, map.ySize/4, 20*map.heightMax};
+float camPos[3] = {25,18,8};
 float angleX = 0.0f;
 float angleY = 0.0f;
 
@@ -85,6 +86,14 @@ int state[3] ={1,1,1};
 int lightState = 1;
 
 
+float ballPos[3]={0,0,0};
+int balli,ballj;
+
+void updateBallMapPos(){
+	ballPos[0] = 25 + 4*balli +1;
+	ballPos[1] = 25 + 4*ballj +1;
+	ballPos[2] = 1 + map.terrainMap[balli*4+26][ballj*4+26];
+}
 
 
 void init(void)
@@ -228,12 +237,12 @@ void fenceHorizontal(int p, int q){
 	int x = p*4;
 	int y = q*4;
 	float verts [8][3] = {{x-2,y+2,map.terrainMap[x-2+25][y+2+25]},
-							{x-2,y+2,map.terrainMap[x-2+25][y+2+25]+10},
-							{x+2,y+2,map.terrainMap[x+2+25][y+2+25]+10},			
+							{x-2,y+2,map.terrainMap[x-2+25][y+2+25]+wallH},
+							{x+2,y+2,map.terrainMap[x+2+25][y+2+25]+wallH},			
 							{x+2,y+2,map.terrainMap[x+2+25][y+2+25]},
 							{x-2,y+3,map.terrainMap[x-2+25][y+3+25]},
-							{x-2,y+3,map.terrainMap[x-2+25][y+3+25]+10},
-							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+10},
+							{x-2,y+3,map.terrainMap[x-2+25][y+3+25]+wallH},
+							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+wallH},
 							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]} };
 
 
@@ -292,12 +301,12 @@ void fenceVertical(int p, int q){
 	int x = p*4;
 	int y = q*4;
 	float verts [8][3] = {{x+2,y+3,map.terrainMap[x+2+25][y+3+25]},
-							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+10},
-							{x+2,y-2,map.terrainMap[x+2+25][y-2+25]+10},			
+							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+wallH},
+							{x+2,y-2,map.terrainMap[x+2+25][y-2+25]+wallH},			
 							{x+2,y-2,map.terrainMap[x+2+25][y-2+25]},
 							{x+3,y+3,map.terrainMap[x+3+25][y+3+25]},
-							{x+3,y+3,map.terrainMap[x+3+25][y+3+25]+10},
-							{x+3,y-2,map.terrainMap[x+3+25][y-2+25]+10},
+							{x+3,y+3,map.terrainMap[x+3+25][y+3+25]+wallH},
+							{x+3,y-2,map.terrainMap[x+3+25][y-2+25]+wallH},
 							{x+3,y-2,map.terrainMap[x+3+25][y-2+25]} };
 
 	glBegin(GL_POLYGON);
@@ -353,8 +362,7 @@ void fenceVertical(int p, int q){
 
 void drawAtom(){
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glColor3f(1,0,0);
-
+	
 	
 	glPushMatrix();
 
@@ -446,6 +454,45 @@ void drawWalls(){
 	glPopMatrix();
 }
 
+void drawSphere(){
+	switch(colourFlag) {
+		case 0:
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, m_ambS); 
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_diffS); 
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_specS); 
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shinyS);
+			break;
+		case 1:
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, atom_amb); 
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, atom_diff); 
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, atom_spec); 
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, atom_shiny);
+			break;
+		case 2:
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, atom_br_amb); 
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, atom_br_diff); 
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, atom_br_spec); 
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, atom_br_shiny);
+			break;
+	}
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+	glPushMatrix();
+	glColor4f(1,1,1,0.5);
+	glTranslatef(ballPos[0],ballPos[1],ballPos[2]);
+	glutSolidSphere(1, 50, 50);
+	glPopMatrix();
+	glDisable(GL_BLEND);
+
+}
+
+void updateCamPos(){
+	camPos[0]= ballPos[0];
+	camPos[1]= ballPos[1]-8;
+	camPos[2]= ballPos[2]+5;
+
+}
+
 
 void display(void)
 {
@@ -459,7 +506,12 @@ void display(void)
 	gluPerspective(45, 1, 1, 500);
 	glMatrixMode(GL_MODELVIEW); 
 	glLoadIdentity(); 
-	gluLookAt(camPos[0], camPos[1], camPos[2], map.xSize/4,map.ySize/4,2*map.heightMax, 0,1,0);
+	updateCamPos();
+	gluLookAt(camPos[0], camPos[1], camPos[2], ballPos[0],ballPos[1],ballPos[2]+2, 0,0,1);
+	printf("camPos:%f,%f,%f\n",camPos[0], camPos[1], camPos[2]);
+	printf("ballPos:%f,%f,%f\n",ballPos[0],ballPos[1],ballPos[2]);
+
+	drawSphere();
 	glLightfv(GL_LIGHT0, GL_POSITION, light_pos0); 
 	glLightfv(GL_LIGHT1, GL_POSITION, light_pos1); 
 
@@ -598,15 +650,15 @@ void menuProc(int value){
 			m = new Maze(size);
 			break;
 		case 8:
-			printf("%s\n", "Switch to red ball");
+			printf("%s\n", "Switch to M1 ball");
 			colourFlag = 0;
 			break;
 		case 9:
-			printf("%s\n", "Switch to green ball");
+			printf("%s\n", "Switch to M2 ball");
 			colourFlag = 1;
 			break;
 		case 10:
-			printf("%s\n", "Switch to blue ball");
+			printf("%s\n", "Switch to M3 ball");
 			colourFlag = 2;
 			break;
 	}
@@ -631,9 +683,9 @@ void createOurMenu(){
 	glutAddSubMenu("Size", subMenu_id1);
 	glutAddMenuEntry("Restart with current size", 1);
 	glutAddMenuEntry("Quit", 2);
-	glutAddMenuEntry("Red Ball", 8);
-	glutAddMenuEntry("Green Ball", 9);
-	glutAddMenuEntry("Blue Ball", 10);
+	glutAddMenuEntry("M1 Ball", 8);
+	glutAddMenuEntry("M2 Ball", 9);
+	glutAddMenuEntry("M3 Ball", 10);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
@@ -693,25 +745,64 @@ void keyboard(unsigned char key, int x, int y)
 void special(int key, int x, int y)
 {
 	/* arrow key presses move the camera */
+	int mod = glutGetModifiers();
 
 	switch(key)
 	{
 		case GLUT_KEY_LEFT:
-			camPos[0] -= 0.5;
-			break;
+			if (mod == GLUT_ACTIVE_SHIFT){
+				camPos[0] -= 2;
+				break;
+			}
+			else{
+				ballPos[0] -= 1;
+				break;
+			}
+			
 
 		case GLUT_KEY_RIGHT:
-			camPos[0] += 0.5;
-			break;
+			if (mod == GLUT_ACTIVE_SHIFT){
+				camPos[0] += 2;
+				break;
+			}
+			else{
+				ballPos[0] += 1;
+				break;
+			}
 
 		case GLUT_KEY_UP:
-			camPos[2] += 0.5;
-			break;
+			if (mod == GLUT_ACTIVE_SHIFT){
+				camPos[1] += 2;
+				break;
+			}
+			else {
+				if (mod == GLUT_ACTIVE_ALT){
+					ballPos[2] += 1;
+					break;
+
+				}
+				else{
+					ballPos[1] += 1;
+					break;
+				}
+			}
 
 		case GLUT_KEY_DOWN:
-			camPos[2] -= 0.5;
-			break;
-		
+			if (mod == GLUT_ACTIVE_SHIFT){
+				camPos[1] -= 2;
+				break;
+			}
+			else {
+				if (mod == GLUT_ACTIVE_ALT){
+					ballPos[2] -= 1;
+					break;
+
+				}
+				else{
+					ballPos[1] -= 1;
+					break;
+				}
+			}
 		case GLUT_KEY_HOME:
 			camPos[1]-=0.5;
 			break;
@@ -740,6 +831,14 @@ void special(int key, int x, int y)
 			light_pos1[2] -= 5;
 			glutPostRedisplay();
 		break;
+		case GLUT_KEY_F5:
+			camPos[2]-=2;
+			break;
+
+		case GLUT_KEY_F6:
+			camPos[2]+=2;
+			
+			break;
 
 	}
 	glutPostRedisplay();
@@ -766,6 +865,10 @@ int main(int argc, char** argv)
 	
 	glutInitWindowSize(700, 700);
 	glutInitWindowPosition(100, 100);
+
+	balli =m->startX;
+	ballj =m->startY;
+	updateBallMapPos();
 
 	glutCreateWindow("3GC3_Project");	//creates the window
 
