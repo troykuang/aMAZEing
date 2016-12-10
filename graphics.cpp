@@ -55,12 +55,24 @@ float atom_br_spec[] = {0.4,0.4,0.4,1};
 float atom_br_shiny = 0.078125;
 
 
-//material for ball
+//material for ball: M1
 float m_ambS[] = {0.458, 0.002, 0.040, 1}; 
 float m_diffS[] = {1.000, 0.271, 0.000, 1}; 
 float m_specS[] = {0.486, 0.988, 0.600, 1}; 
 float shinyS = 27; 
 
+//M2
+float ambS1[] ={ 0.105882f, 0.058824f, 0.113725f, 1.0f };
+float diffS1[] ={0.427451f, 0.470588f, 0.541176f, 1.0f };
+float specS1[] ={0.333333f, 0.333333f, 0.521569f, 1.0f };
+float shinyS1 = 9.84615f;
+
+//M3
+//Emerald
+float ambS2[] ={ 0.0215f, 0.1745f, 0.0215f, 0.55f };
+float diffS2[] ={0.07568f, 0.61424f, 0.07568f, 0.55f };
+float specS2[] ={0.633f, 0.727811f, 0.633f, 0.55f };
+float shinyS2 = 76.8f;
 //to use for the normals
 float norm[3] = {0,0,1};	//init to the default
 float norm2[3] = {0,0,1};	//for doing the norms of quads
@@ -763,16 +775,16 @@ void drawSphere(){
 			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shinyS);
 			break;
 		case 1:
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, atom_amb); 
-			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, atom_diff); 
-			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, atom_spec); 
-			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, atom_shiny);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,ambS1); 
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffS1); 
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specS1); 
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shinyS1);
 			break;
 		case 2:
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, atom_br_amb); 
-			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, atom_br_diff); 
-			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, atom_br_spec); 
-			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, atom_br_shiny);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambS2); 
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffS2); 
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specS2); 
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shinyS2);
 			break;
 	}
 	glEnable(GL_BLEND);
@@ -1012,6 +1024,7 @@ void menuProc(int value){
 	}
 	map.xSize = (size*4)+50;
 	map.ySize = (size*4)+50;
+	map.reset();
 	map.constructCircleAlg();
 	glutPostRedisplay();
 	glutSetWindow(w2);
