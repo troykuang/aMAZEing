@@ -9,6 +9,7 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <cmath>
 #include "logic.h"
 #include "Maze.h"
 #include "Cell.h"
@@ -17,7 +18,8 @@ HeightMap map;
 int size = 10;
 Maze *m = new Maze(size);
 Arrow *a = new Arrow();
-
+float rotX;
+int w2;
 //for the camera
 float camPos[] = {map.xSize/4, map.ySize/4, 20*map.heightMax};
 float angleX = 0.0f;
@@ -37,11 +39,32 @@ float diff1[4] = {0.8, 0.8, 0.8, 1};
 float spec1[4] = {0.5, 0.5, 0.5, 1}; 
 
 
-//The material.... want matte so high diffuse, low specular
-float m_amb[] = {0.000, 0.392, 0.000, 1}; 
-float m_diff[] = {0.133, 0.545, 0.133, 1}; 
-float m_spec[] = {0.486, 0.988, 0.000, 1}; 
-float shiny = 0.078125; 
+//The terrain material, obsidial
+float m_amb[] = {0.05375, 0.05, 0.06625, 1}; 
+float m_diff[] = {0.18275, 0.17, 0.22525, 1}; 
+float m_spec[] = {0.332741, 0.328634, 0.346435, 1}; 
+float shiny = 0.3; 
+
+//The wall material, chrome
+
+float mW_amb[] = {0.25, 0.25, 0.25, 1}; 
+float mW_diff[] = {0.4, 0.4, 0.4, 1}; 
+float mW_spec[] = {0.774597, 0.774597,0.774597, 1}; 
+float Wshiny = 0.6; 
+
+//atom material center sphere
+float atom_amb[] = {0,0,0,1};
+float atom_diff[] = {5,0,0,1};
+float atom_spec[] = {0.7,0.6,0.6,1};
+float atom_shiny = 0.25;
+
+//atom branch material
+float atom_br_amb[] = {0.02, 0.02, 0.02, 1};
+float atom_br_diff[] = { 0.01, 0.01, 0.01, 1};
+float atom_br_spec[] = {0.4,0.4,0.4,1};
+float atom_br_shiny = 0.078125;
+
+
 
 //material for ball
 float m_ambS[] = {0.458, 0.002, 0.040, 1}; 
@@ -97,7 +120,8 @@ void init(void)
 
 void FPS(int val){
 		glutPostRedisplay();
-		glutTimerFunc(5,FPS,0); //1 sec
+		glutTimerFunc(10,FPS,0); //1 sec
+		rotX += 2;
 }
 
 void normalFormTri(){
@@ -177,6 +201,10 @@ void getNormal(int v0x,int v0y,int v0z,int v1x,int v1y,int v1z,int v2x,int v2y,i
 
 
 void drawTerrainQuad(){	//for drawing quads
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  m_amb); 
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  m_diff); 
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  m_spec); 
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  shiny); 
 	glShadeModel(GL_FLAT);
 
 		for(int i =0; i< map.xSize; i++){
@@ -262,12 +290,12 @@ void fenceHorizontal(int p, int q){
 void fenceVertical(int p, int q){
 	int x = p*4;
 	int y = q*4;
-	float verts [8][3] = {{x+2,y+2,map.terrainMap[x+2+25][y+2+25]},
-							{x+2,y+2,map.terrainMap[x+2+25][y+2+25]+10},
+	float verts [8][3] = {{x+2,y+3,map.terrainMap[x+2+25][y+3+25]},
+							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+10},
 							{x+2,y-2,map.terrainMap[x+2+25][y-2+25]+10},			
 							{x+2,y-2,map.terrainMap[x+2+25][y-2+25]},
-							{x+3,y+2,map.terrainMap[x+3+25][y+2+25]},
-							{x+3,y+2,map.terrainMap[x+3+25][y+2+25]+10},
+							{x+3,y+3,map.terrainMap[x+3+25][y+3+25]},
+							{x+3,y+3,map.terrainMap[x+3+25][y+3+25]+10},
 							{x+3,y-2,map.terrainMap[x+3+25][y-2+25]+10},
 							{x+3,y-2,map.terrainMap[x+3+25][y-2+25]} };
 
@@ -322,9 +350,71 @@ void fenceVertical(int p, int q){
 
 }
 
-void drawWalls(){
+void drawAtom(){
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glColor3f(1,0,0);
+
+	
 	glPushMatrix();
-	glTranslatef(25,25,0);
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, atom_amb ); 
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, atom_diff); 
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, atom_spec ); 
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  atom_shiny); 
+
+	//HERE IS WHERE WE TRANSLATE IT TO THE COORDINATES OF THE KEY!!
+	glTranslatef(m->endX*4 +1, m->endY*4 +1, map.terrainMap[m->endX*4+26][m->endY*4+26]+1); 
+	//glTranslatef(2,2, map.terrainMap[2][2]+3); //this will have int x, int y that is the key location BUT MULTIPLIED BY 4
+	glRotatef(rotX,0,0,1);
+	glScalef(1+(cos(rotX)/15),1+(cos(rotX)/15),1+(cos(rotX)/15));
+
+
+
+	glPushMatrix();
+		glTranslatef(cos(rotX)/11,sin(rotX)/11,sin(rotX)/11);
+		glutSolidSphere(0.5,50,50);
+	glPopMatrix();
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, atom_br_amb ); 
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, atom_br_diff); 
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, atom_br_spec ); 
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  atom_br_shiny); 
+	
+	glRotatef(45,0,1,0);
+
+	glPushMatrix();
+		glRotatef(2*cos(rotX),0,1,0);
+		glutSolidTorus(0.10,1,100,100);
+	glPopMatrix();
+
+	
+	glRotatef(45,0,1,0);
+
+	glPushMatrix();
+		glutSolidTorus(0.10,1,100,100);
+	glPopMatrix();
+
+	glRotatef(45,0,1,0);
+	
+	glPushMatrix();
+		glRotatef(2*cos(rotX),0,1,0);
+		glutSolidTorus(0.10,1,100,100);
+	glPopMatrix();
+
+	
+	glPopMatrix();
+
+}
+
+void drawWalls(){
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  mW_amb); 
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  mW_diff); 
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  mW_spec); 
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  Wshiny); 
+
+	glPushMatrix();
+	//glTranslatef(25,25,0);
 
 	for (int i = 0; i < m->getSize(); i++) {
 		for (int j = 0; j < m->getSize(); j++) {
@@ -386,7 +476,11 @@ void display(void)
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  shiny); 
 	
 	drawTerrainQuad();
-	drawWalls();
+	glPushMatrix();
+		glTranslatef(25,25,0);
+		drawWalls();
+		drawAtom();
+	glPopMatrix();
 	
 	glPopMatrix();
 	glFlush();
@@ -395,6 +489,74 @@ void display(void)
 	
 	
 }
+
+void display_2(void){
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	
+	gluOrtho2D(0,300,0,300);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(10,10,0);
+	glColor3f(1,0,0);
+	int side = 280/size;
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size; j++) {
+			if (m->getUp(i,j)) {
+				glBegin(GL_LINES);
+					glVertex2f(i*side,j*side);
+					glVertex2f(i*(side) + side,j*side);
+				glEnd();
+			}
+		} 
+	
+		for (int j = 0; j < size; j++) {
+			if (m->getLeft(i,j)){ 
+				glBegin(GL_LINES);
+					glVertex2f(i*side,j*side);
+					glVertex2f(i*side,j*(side) + side);
+				glEnd();
+			}
+			
+			if (m->getRight(i,j)){ 
+				glBegin(GL_LINES);
+					glVertex2f(i*(side) + side,j*side);
+					glVertex2f(i*(side) + side,j*(side) + side);
+				glEnd();
+			}
+			glPointSize(5);
+			if (i == m->startX && j == m->startY) {
+				glColor3f(1,0,0);
+				glBegin(GL_POINTS);
+					glVertex2f(i*side + side/2 - 0.2,j*side + side/2 - 0.2);
+					
+				glEnd();
+			}
+			
+			if (i == m->endX && j == m->endY) {
+				glColor3f(0,1,0);
+				glBegin(GL_POINTS);
+					glVertex2f(i*side + side/2 - 0.2,j*side + side/2 - 0.2);
+					
+				glEnd();
+				glColor3f(1,0,0);
+			}
+		}
+		
+		for (int j = 0; j < size; j++) {
+			if (m->getDown(i,j)){
+				glBegin(GL_LINES);
+					glVertex2f(i*side,j*(side) + side);
+					glVertex2f(i*(side) + side,j*(side)+side);
+				glEnd();
+			}
+		}
+		
+	} 
+	glFlush();
+}
+
 
 //add create menu to main()
 void menuProc(int value){
@@ -437,6 +599,8 @@ void menuProc(int value){
 	map.ySize = (size*4)+50;
 	map.constructCircleAlg();
 	glutPostRedisplay();
+	glutSetWindow(w2);
+	glutPostRedisplay();
 }
 
 void createOurMenu(){
@@ -461,14 +625,18 @@ void keyboard(unsigned char key, int x, int y)
 	/* key presses move the cube, if it isn't at the extents (hard-coded here) */
 	switch (key)
 	{
-		case 'q':
 		case 27:
 			exit (0);
 			break;
-
-		case'r':
+		case 'r':
+		case 'R':
 			map.reset();
-			//map.constructCircleAlg();
+			map.constructCircleAlg();
+			glutPostRedisplay();
+			break;
+		case 'f':
+		case 'F':
+			map.reset();
 			glutPostRedisplay();
 			break;
 		case 'l':
@@ -499,6 +667,8 @@ void keyboard(unsigned char key, int x, int y)
 
 
 	}
+	glutSetWindow(w2);
+	glutPostRedisplay();
 }
 
 
@@ -555,6 +725,8 @@ void special(int key, int x, int y)
 
 	}
 	glutPostRedisplay();
+	glutSetWindow(w2);
+	glutPostRedisplay();
 }
 
 
@@ -572,7 +744,7 @@ int main(int argc, char** argv)
 	map.constructCircleAlg();
 	map.xSize = (size*4)+50;
 	map.ySize = (size*4)+50;
-
+	rotX = 0;
 
 
 
@@ -597,8 +769,14 @@ int main(int argc, char** argv)
 
 
 	//second window for the overview
-
-
+	glutInitWindowSize(300, 300);
+	glutInitWindowPosition(900, 200);
+	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
+	w2 = glutCreateWindow(argv[0]);
+	glutSetWindowTitle("2D_Map");
+	
+	
+	glutDisplayFunc(display_2);
 	glutMainLoop();				//starts the event loop
 
 	return(0);					//return may not be necessary on all compilers
