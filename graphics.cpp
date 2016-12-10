@@ -74,7 +74,10 @@ int lightState = 1;
 
 
 float ballPos[3]={0,0,0};
+float ballRotate[] = {1,0,0};
+float degree = 30;
 int balli,ballj;
+char dir = 'N';
 
 GLubyte* snow;
 GLubyte* ice;
@@ -281,8 +284,8 @@ void initTexture(void){
 
 void updateBallMapPos(){
 	ballPos[0] = 25 + 4*balli +1;
-	ballPos[1] = 25 + 4*ballj +1;
-	ballPos[2] = 1 + map.terrainMap[balli*4+26][ballj*4+26];
+	ballPos[1] = 25 + 4*(ballj+1) +1;
+	ballPos[2] = map.terrainMap[balli*4+27][(ballj+1)*4+27] + 1;
 }
 
 void init(void)
@@ -473,12 +476,12 @@ void fenceHorizontal(int p, int q){
 	int x = p*4;
 	int y = q*4;
 	float verts [8][3] = {{x-2,y+2,map.terrainMap[x-2+25][y+2+25]},
-							{x-2,y+2,map.terrainMap[x-2+25][y+2+25]+10},
-							{x+2,y+2,map.terrainMap[x+2+25][y+2+25]+10},			
+							{x-2,y+2,map.terrainMap[x-2+25][y+2+25]+wallH},
+							{x+2,y+2,map.terrainMap[x+2+25][y+2+25]+wallH},			
 							{x+2,y+2,map.terrainMap[x+2+25][y+2+25]},
 							{x-2,y+3,map.terrainMap[x-2+25][y+3+25]},
-							{x-2,y+3,map.terrainMap[x-2+25][y+3+25]+10},
-							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+10},
+							{x-2,y+3,map.terrainMap[x-2+25][y+3+25]+wallH},
+							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+wallH},
 							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]} };
 
 
@@ -581,12 +584,12 @@ void fenceVertical(int p, int q){
 	int x = p*4;
 	int y = q*4;
 	float verts [8][3] = {{x+2,y+3,map.terrainMap[x+2+25][y+3+25]},
-							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+10},
-							{x+2,y-2,map.terrainMap[x+2+25][y-2+25]+10},			
+							{x+2,y+3,map.terrainMap[x+2+25][y+3+25]+wallH},
+							{x+2,y-2,map.terrainMap[x+2+25][y-2+25]+wallH},			
 							{x+2,y-2,map.terrainMap[x+2+25][y-2+25]},
 							{x+3,y+3,map.terrainMap[x+3+25][y+3+25]},
-							{x+3,y+3,map.terrainMap[x+3+25][y+3+25]+10},
-							{x+3,y-2,map.terrainMap[x+3+25][y-2+25]+10},
+							{x+3,y+3,map.terrainMap[x+3+25][y+3+25]+wallH},
+							{x+3,y-2,map.terrainMap[x+3+25][y-2+25]+wallH},
 							{x+3,y-2,map.terrainMap[x+3+25][y-2+25]} };
 
 	glBegin(GL_POLYGON);
@@ -677,7 +680,7 @@ void drawAtom(){
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  atom_shiny); 
 
 	
-	glTranslatef(m->endX*4 +1, (m->endY+1)*4 +1, map.terrainMap[m->endX*4+26][m->endY*4+26]+1); 
+	glTranslatef(m->endX*4 +1, (m->endY+1)*4 +1, map.terrainMap[m->endX*4+26][m->endY*4+26]+2); 
 	glRotatef(rotX,0,0,1);
 	glScalef(1+(cos(rotX)/15),1+(cos(rotX)/15),1+(cos(rotX)/15));
 
@@ -777,6 +780,7 @@ void drawSphere(){
 	glPushMatrix();
 	glColor4f(1,1,1,0.5);
 	glTranslatef(ballPos[0],ballPos[1],ballPos[2]);
+	glRotatef(degree,ballRotate[0], ballRotate[1], ballRotate[2]);
 	glutSolidSphere(1, 50, 50);
 	glPopMatrix();
 	glDisable(GL_BLEND);
@@ -784,12 +788,34 @@ void drawSphere(){
 }
 
 void updateCamPos(){
-	camPos[0]= ballPos[0];
-	camPos[1]= ballPos[1]-8;
-	camPos[2]= ballPos[2]+5;
+	switch (dir){
+		case 'N':
+			camPos[0]= ballPos[0];
+			camPos[1]= ballPos[1]-8;
+			camPos[2]= ballPos[2]+5;
+			break;
+		case 'S':
+			camPos[0]= ballPos[0];
+			camPos[1]= ballPos[1]+8;
+			camPos[2]= ballPos[2]+5;
+			break;
+		case 'W':
+			camPos[0]= ballPos[0]+8;
+			camPos[1]= ballPos[1];
+			camPos[2]= ballPos[2]+5;
+			break;
+		case 'E':
+			camPos[0]= ballPos[0]-8;
+			camPos[1]= ballPos[1];
+			camPos[2]= ballPos[2]+5;
+			break;			
 
+	}
 }
 
+bool checkWin(){
+	return ( (balli == m->endX) && (ballj == m->endY));
+}
 
 void display(void)
 {
@@ -804,10 +830,19 @@ void display(void)
 	gluPerspective(45, 1, 1, 500);
 	glMatrixMode(GL_MODELVIEW); 
 	glLoadIdentity(); 
+
+	updateBallMapPos();
 	updateCamPos();
-	gluLookAt(camPos[0], camPos[1], camPos[2], ballPos[0],ballPos[1],ballPos[2]+2, 0,0,1);
-	printf("camPos:%f,%f,%f\n",camPos[0], camPos[1], camPos[2]);
-	printf("ballPos:%f,%f,%f\n",ballPos[0],ballPos[1],ballPos[2]);
+
+	if (!checkWin()){
+		gluLookAt(camPos[0], camPos[1], camPos[2], ballPos[0],ballPos[1],ballPos[2]+1.5, 0,0,1);
+	}
+	else{
+		gluLookAt(map.xSize/4, map.ySize/4, 20*map.heightMax, ballPos[0],ballPos[1],0, 0,1,0);
+	}
+
+
+
 	
 	glDisable(GL_COLOR_MATERIAL);
 	drawSphere();
@@ -829,7 +864,6 @@ void display(void)
 		glDisable(GL_TEXTURE_2D);
 		glEnable(GL_COLOR_MATERIAL);
 
-		
 
 		glPushMatrix();
 			glTranslatef(25,25,0);
@@ -846,7 +880,7 @@ void display(void)
 
 
 	glFlush();
-	a->drawArrow('E');	
+	a->drawArrow(dir);	
 	glutSwapBuffers();
 	
 	
@@ -898,6 +932,14 @@ void display_2(void){
 			
 			if (i == m->endX && j == m->endY) {
 				glColor3f(0,1,0);
+				glBegin(GL_POINTS);
+					glVertex2f(i*side + side/2 - 0.2,j*side + side/2 - 0.2);
+					
+				glEnd();
+				glColor3f(1,0,0);
+			}
+			if (i == balli && j== ballj){
+				glColor3f(0,0,1);
 				glBegin(GL_POINTS);
 					glVertex2f(i*side + side/2 - 0.2,j*side + side/2 - 0.2);
 					
@@ -1067,7 +1109,21 @@ void special(int key, int x, int y)
 				break;
 			}
 			else{
-				ballPos[0] -= 1;
+				switch(dir)
+				{
+					case 'N':
+						dir = 'W';
+						break;
+					case 'S':
+						dir = 'E';
+						break;
+					case 'E':
+						dir = 'N';
+						break;
+					case 'W':
+						dir = 'S';
+						break;
+				}	
 				break;
 			}
 			
@@ -1078,7 +1134,21 @@ void special(int key, int x, int y)
 				break;
 			}
 			else{
-				ballPos[0] += 1;
+				switch(dir)
+				{
+					case 'N':
+						dir = 'E';
+						break;
+					case 'S':
+						dir = 'W';
+						break;
+					case 'E':
+						dir = 'S';
+						break;
+					case 'W':
+						dir = 'N';
+						break;
+				}
 				break;
 			}
 
@@ -1094,10 +1164,45 @@ void special(int key, int x, int y)
 
 				}
 				else{
-					ballPos[1] += 1;
-					break;
+					switch(dir)
+				{
+					case 'S':
+						degree+=60;
+						if (!m->getUp(balli,ballj)){
+							ballj -= 1;
+							break;
+						}
+						break;
+						
+					case 'N':
+						degree+=60;
+						if (!m->getDown(balli,ballj)){
+							ballj += 1;
+							break;
+						}
+						break;
+						
+					case 'E':
+						degree+=60;
+						if(!m->getRight(balli,ballj)){
+							balli += 1;
+							break;
+						}
+						break;
+					case 'W':
+						degree+=60;
+						if (!m->getLeft(balli,ballj)){
+							balli -= 1;
+							break;
+						}
+						break;
+						
 				}
+				break;		
+				}
+				break;
 			}
+
 
 		case GLUT_KEY_DOWN:
 			if (mod == GLUT_ACTIVE_SHIFT){
@@ -1111,8 +1216,22 @@ void special(int key, int x, int y)
 
 				}
 				else{
-					ballPos[1] -= 1;
-					break;
+					switch(dir)
+				{
+					case 'N':
+						dir = 'S';
+						break;
+					case 'S':
+						dir = 'N';
+						break;
+					case 'E':
+						dir = 'W';
+						break;
+					case 'W':
+						dir = 'E';
+						break;
+				}
+				break;
 				}
 			}
 		case GLUT_KEY_HOME:
@@ -1175,14 +1294,6 @@ int main(int argc, char** argv)
 	map.xSize = (size*4)+50;
 	map.ySize = (size*4)+50;
 	rotX = 0;
-
-
-
-
-
-	
-
-	
 	
 	glutInitWindowSize(700, 700);
 	glutInitWindowPosition(100, 100);
