@@ -20,6 +20,7 @@ Maze *m = new Maze(size);
 Arrow *a = new Arrow();
 float rotX;
 int w2;
+int colourFlag = 0;//0 = red, 1 = green, 2 = blue
 //for the camera
 float camPos[] = {map.xSize/4, map.ySize/4, 20*map.heightMax};
 float angleX = 0.0f;
@@ -463,28 +464,30 @@ void display(void)
 	glLightfv(GL_LIGHT1, GL_POSITION, light_pos1); 
 
 	glPushMatrix();
-	glRotatef(angleX, 1, 0, 0);
-	glRotatef(angleY, 0, 1, 0);
-    
-	
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //gl_FILL
+		glRotatef(angleX, 1, 0, 0);
+		glRotatef(angleY, 0, 1, 0);
+	    
+		
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //gl_FILL
 
-							//applying the material 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  m_amb); 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  m_diff); 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  m_spec); 
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  shiny); 
-	
-	drawTerrainQuad();
-	glPushMatrix();
-		glTranslatef(25,25,0);
-		drawWalls();
-		drawAtom();
+								//applying the material 
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  m_amb); 
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  m_diff); 
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  m_spec); 
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  shiny); 
+		
+		drawTerrainQuad();
+		glPushMatrix();
+			glTranslatef(25,25,0);
+			drawWalls();
+			drawAtom();
+		glPopMatrix();
+		//draw balls here using colour flag
+		//eg. drawBall(colourFlag)
 	glPopMatrix();
-	
-	glPopMatrix();
-	glFlush();
-	a->drawArrow('E');	
+
+	glFlush();//all 3D scene drawing before this point
+	a->drawArrow('E');//switch to 2d scene drawing 	
 	glutSwapBuffers();
 	
 	
@@ -594,6 +597,18 @@ void menuProc(int value){
 			size = 50;
 			m = new Maze(size);
 			break;
+		case 8:
+			printf("%s\n", "Switch to red ball");
+			colourFlag = 0;
+			break;
+		case 9:
+			printf("%s\n", "Switch to green ball");
+			colourFlag = 1;
+			break;
+		case 10:
+			printf("%s\n", "Switch to blue ball");
+			colourFlag = 2;
+			break;
 	}
 	map.xSize = (size*4)+50;
 	map.ySize = (size*4)+50;
@@ -616,6 +631,9 @@ void createOurMenu(){
 	glutAddSubMenu("Size", subMenu_id1);
 	glutAddMenuEntry("Restart with current size", 1);
 	glutAddMenuEntry("Quit", 2);
+	glutAddMenuEntry("Red Ball", 8);
+	glutAddMenuEntry("Green Ball", 9);
+	glutAddMenuEntry("Blue Ball", 10);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
@@ -744,13 +762,7 @@ int main(int argc, char** argv)
 	map.constructCircleAlg();
 	map.xSize = (size*4)+50;
 	map.ySize = (size*4)+50;
-	rotX = 0;
-
-
-
-
-
-	
+	rotX = 0;	
 	
 	glutInitWindowSize(700, 700);
 	glutInitWindowPosition(100, 100);
