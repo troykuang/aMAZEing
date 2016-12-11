@@ -16,6 +16,7 @@ Arrow::Arrow() {
 
 Arrow::~Arrow(){}
 
+//load the ppm file into the program
 GLubyte* Arrow::LoadPPM(char* file, int* width, int* height, int* max)
 {
     GLubyte* img;
@@ -96,7 +97,7 @@ void Arrow::loadArrow() {
                  GL_UNSIGNED_BYTE, image4);
 }
 
-void Arrow::drawArrow(char dir){
+void Arrow::drawArrow(char dir){//display different texture according to the direction
     
     glMatrixMode(GL_PROJECTION); 
     glLoadIdentity(); 
@@ -119,5 +120,5 @@ void Arrow::drawArrow(char dir){
             glDrawPixels(width,height,GL_RGB, GL_UNSIGNED_BYTE, image3);
             break;
     }
-    glFlush();
+    glFlush();//draw the 2d scene
 }
