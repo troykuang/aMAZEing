@@ -20,7 +20,7 @@ Maze *m = new Maze(size);
 Arrow *a = new Arrow();
 float rotX;
 int w2;
-int wallH = 2;
+int wallH = 2; //the height of the wall
 int colourFlag = 0;//0 = M1, 1 = M2, 2 = M3
 
 //for the camera
@@ -84,9 +84,11 @@ float v3 [3] = {0,0,0,};
 int state[3] ={1,1,1};
 int lightState = 1;
 
-
+// init ballPos 
 float ballPos[3]={0,0,0};
+// for the rolling animation 
 float ballRotate[] = {1,0,0};
+// for the ball rotation, 30 degree each time 
 float degree = 30;
 int balli,ballj;
 char dir = 'N'; //inital direction: North
