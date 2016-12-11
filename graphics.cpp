@@ -90,7 +90,7 @@ float ballPos[3]={0,0,0};
 float ballRotate[] = {1,0,0};
 // for the ball rotation, 30 degree each time 
 float degree = 30;
-int balli,ballj;
+int balli,ballj; // ball position in the back end
 char dir = 'N'; //inital direction: North
 
 //image array
@@ -286,7 +286,7 @@ void initTexture(void){//initialize all the texture
     glScalef(1,-1,-1);
 }
 
-void updateBallMapPos(){//update the position for the ball
+void updateBallMapPos(){//update the position for the ball in the terrain according to its i, j
 	ballPos[0] = 25 + 4*balli +1;
 	ballPos[1] = 25 + 4*(ballj+1) +1;
 	ballPos[2] = map.terrainMap[balli*4+27][(ballj+1)*4+27] + 1;
@@ -683,7 +683,7 @@ void drawAtom(){//draw an animated atom at the end point of the maze
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, atom_spec ); 
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,  atom_shiny); 
 
-	
+	// transfer to the end point
 	glTranslatef(m->endX*4 +1, (m->endY+1)*4 +1, map.terrainMap[m->endX*4+26][m->endY*4+26]+2); 
 	glRotatef(rotX,0,0,1);
 	glScalef(1+(cos(rotX)/15),1+(cos(rotX)/15),1+(cos(rotX)/15));
@@ -758,10 +758,11 @@ void drawWalls(){//readring process of the maze
 
 	glPopMatrix();
 }
-void drawSphere(){//draw the ball with different material and alpha blending
+void drawSphere(){//draw the ball with different materials and alpha blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(1,1,1,0.3);
+	//different materials 
 	switch(colourFlag) {
 		case 0:
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, m_ambS); 
@@ -847,6 +848,7 @@ void display(void)
 		gluLookAt(camPos[0], camPos[1], camPos[2], ballPos[0],ballPos[1],ballPos[2]+1.5, 0,0,1);
 	}
 	else{
+		// first person perspective
 		gluLookAt(map.xSize/4, map.ySize/4, 20*map.heightMax, ballPos[0],ballPos[1],0, 0,1,0);
 	}
 
