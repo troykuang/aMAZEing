@@ -89,7 +89,7 @@ float ballPos[3]={0,0,0};
 float ballRotate[] = {1,0,0};
 float degree = 30;
 int balli,ballj;
-char dir = 'N';
+char dir = 'N'; //inital direction: North
 
 GLubyte* snow;
 GLubyte* ice;
