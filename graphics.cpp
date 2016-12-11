@@ -91,6 +91,7 @@ float degree = 30;
 int balli,ballj;
 char dir = 'N'; //inital direction: North
 
+//image array
 GLubyte* snow;
 GLubyte* ice;
 GLubyte* grass;
@@ -105,7 +106,7 @@ int width, height, Tmax;
 GLuint myTex[10];
 bool cheat;
 
-
+//load ppm file into the program
 GLubyte* LoadPPM(char* file, int* width, int* height, int* Tmax)
 {
     GLubyte* img;
@@ -165,7 +166,7 @@ GLubyte* LoadPPM(char* file, int* width, int* height, int* Tmax)
     return img;
 }
 
-void initTexture(void){
+void initTexture(void){//initialize all the texture
 	glGenTextures(9, myTex);
     
 	//textures
@@ -278,23 +279,12 @@ void initTexture(void){
 
     drake = LoadPPM("drake.ppm",&width, &height,&Tmax);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-                 GL_UNSIGNED_BYTE, drake);
-    
-
-
-    
-    
-    
-    
-    
+                 GL_UNSIGNED_BYTE, drake); 
     glMatrixMode(GL_TEXTURE);
     glScalef(1,-1,-1);
-
-
-
 }
 
-void updateBallMapPos(){
+void updateBallMapPos(){//update the position for the ball
 	ballPos[0] = 25 + 4*balli +1;
 	ballPos[1] = 25 + 4*(ballj+1) +1;
 	ballPos[2] = map.terrainMap[balli*4+27][(ballj+1)*4+27] + 1;
@@ -335,7 +325,7 @@ void init(void)
 }
 
 
-void FPS(int val){
+void FPS(int val){//timer function
 		glutPostRedisplay();
 		glutTimerFunc(10,FPS,0); //1 sec
 		rotX += 2;
@@ -385,7 +375,7 @@ void normalFormQuad(int i, int j){
 	norm[2] = (norm[2]+norm2[2])/2;
 
 }
-
+//calculate the normal
 void getNormal(int v0x,int v0y,int v0z,int v1x,int v1y,int v1z,int v2x,int v2y,int v2z,int v3x,int v3y,int v3z){
 	v1[0] = v1x;
 	v1[1] = v1y;
@@ -464,7 +454,7 @@ void drawTerrainQuad(){	//for drawing quads
 		}//end of both for loops
 }
 
-void fenceHorizontal(int p, int q){
+void fenceHorizontal(int p, int q){//redering a horizontal wall
 		switch(size){
 		case 10:
 			glBindTexture(GL_TEXTURE_2D, myTex[1]);
@@ -572,7 +562,7 @@ void fenceHorizontal(int p, int q){
 
 }
 
-void fenceVertical(int p, int q){
+void fenceVertical(int p, int q){//rendering a vertical wall
 	switch(size){
 		case 10:
 			glBindTexture(GL_TEXTURE_2D, myTex[1]);
@@ -679,7 +669,7 @@ void fenceVertical(int p, int q){
 
 }
 
-void drawAtom(){
+void drawAtom(){//draw an animated atom at the end point of the maze
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glColor3f(1,0,0);
 
@@ -734,7 +724,7 @@ void drawAtom(){
 
 }
 
-void drawWalls(){
+void drawWalls(){//readring process of the maze
 
 	glPushMatrix();
 
@@ -766,7 +756,7 @@ void drawWalls(){
 
 	glPopMatrix();
 }
-void drawSphere(){
+void drawSphere(){//draw the ball with different material and alpha blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(1,1,1,0.3);
@@ -798,11 +788,9 @@ void drawSphere(){
 	glutSolidSphere(1, 50, 50);
 	glPopMatrix();
 	glDisable(GL_BLEND);
-	//glEnable(GL_TEXTURE_2D);
-
 }
 
-void updateCamPos(){
+void updateCamPos(){//update the camera according to the current direstion
 	switch (dir){
 		case 'N':
 			camPos[0]= ballPos[0];
@@ -828,7 +816,7 @@ void updateCamPos(){
 	}
 }
 
-bool checkWin(){
+bool checkWin(){//check if the ball reach the end point of the maze
 	bool result = ( (balli == m->endX) && (ballj == m->endY));
 	if (result) {
 		printf("%s\n", "You reach the end point! WIN!");
@@ -905,7 +893,7 @@ void display(void)
 	
 }
 
-void display_2(void){
+void display_2(void){//display function for the second window to dray the 2d map
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -941,7 +929,7 @@ void display_2(void){
 				glEnd();
 			}
 			glPointSize(5);
-			if (i == m->startX && j == m->startY) {
+			if (i == m->startX && j == m->startY) {//draw startint position
 				glColor3f(1,0,0);
 				glBegin(GL_POINTS);
 					glVertex2f(i*side + side/2 - 0.2,j*side + side/2 - 0.2);
@@ -949,7 +937,7 @@ void display_2(void){
 				glEnd();
 			}
 			
-			if (i == m->endX && j == m->endY) {
+			if (i == m->endX && j == m->endY) {//draw ending position
 				glColor3f(0,1,0);
 				glBegin(GL_POINTS);
 					glVertex2f(i*side + side/2 - 0.2,j*side + side/2 - 0.2);
@@ -957,7 +945,7 @@ void display_2(void){
 				glEnd();
 				glColor3f(1,0,0);
 			}
-			if (i == balli && j== ballj){
+			if (i == balli && j== ballj){//draw ball's position
 				glColor3f(0,0,1);
 				glBegin(GL_POINTS);
 					glVertex2f(i*side + side/2 - 0.2,j*side + side/2 - 0.2);
@@ -1105,11 +1093,7 @@ void keyboard(unsigned char key, int x, int y)
 					lightState = 1;
 					glutPostRedisplay();
 					break;
-
-
 		}
-
-
 	}
 	glutSetWindow(w2);
 	glutPostRedisplay();
@@ -1297,12 +1281,6 @@ void special(int key, int x, int y)
 	glutPostRedisplay();
 }
 
-
-
-
-
-
-
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);		//starts up GLUT
@@ -1327,25 +1305,18 @@ int main(int argc, char** argv)
 	glutDisplayFunc(display);	//registers "display" as the display callback function
 	glutKeyboardFunc(keyboard);
 	createOurMenu();
-	//glutMouseFunc(mouse);
 	glutSpecialFunc(special);
 	glutTimerFunc(0 , FPS, 0);
 
 	initTexture();
 	init();
-
-
 	//second window for the overview
 	glutInitWindowSize(300, 300);
 	glutInitWindowPosition(900, 200);
 	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
 	w2 = glutCreateWindow(argv[0]);
-	glutSetWindowTitle("Labyrinth Map");
-	
-	
+	glutSetWindowTitle("Labyrinth Map");	
 	glutDisplayFunc(display_2);
-	
-
 
 	glutMainLoop();				//starts the event loop
 
