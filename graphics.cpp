@@ -767,6 +767,9 @@ void drawWalls(){
 	glPopMatrix();
 }
 void drawSphere(){
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1,1,1,0.3);
 	switch(colourFlag) {
 		case 0:
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, m_ambS); 
@@ -787,15 +790,15 @@ void drawSphere(){
 			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shinyS2);
 			break;
 	}
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+	
 	glPushMatrix();
-	glColor4f(1,1,1,0.5);
+	
 	glTranslatef(ballPos[0],ballPos[1],ballPos[2]);
 	glRotatef(degree,ballRotate[0], ballRotate[1], ballRotate[2]);
 	glutSolidSphere(1, 50, 50);
 	glPopMatrix();
 	glDisable(GL_BLEND);
+	//glEnable(GL_TEXTURE_2D);
 
 }
 
@@ -826,7 +829,11 @@ void updateCamPos(){
 }
 
 bool checkWin(){
-	return ( (balli == m->endX) && (ballj == m->endY));
+	bool result = ( (balli == m->endX) && (ballj == m->endY));
+	if (result) {
+		printf("%s\n", "You reach the end point! WIN!");
+	}
+	return result;
 }
 
 void display(void)
