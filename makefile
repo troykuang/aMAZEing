@@ -26,7 +26,7 @@ else
 endif
 
 #change the 't1' name to the name you want to call your application
-PROGRAM_NAME = 3GC3_Project
+PROGRAM_NAME = aMAZEing
 
 # all: $(PROGRAM_NAME_2) $(PROGRAM_NAME)
 all: $(PROGRAM_NAME)
@@ -40,7 +40,8 @@ all: $(PROGRAM_NAME)
 #ie. boilerplateClass.o and yourFile.o
 #make will automatically know that the objectfile needs to be compiled
 #form a cpp source file and find it itself :)
-$(PROGRAM_NAME): logic.o graphics.o Maze.o Cell.o Arrow.o
+# $(PROGRAM_NAME): logic.o graphics.o Maze.o Cell.o Arrow.o
+$(PROGRAM_NAME): logic.o graphics.o Maze.o Cell.o
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 # $(PROGRAM_NAME_2): main.o interface.o

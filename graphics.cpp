@@ -13,11 +13,11 @@
 #include "logic.h"
 #include "Maze.h"
 #include "Cell.h"
-#include "Arrow.h"
+// #include "Arrow.h"
 HeightMap map;
 int size = 10;
 Maze *m = new Maze(size);
-Arrow *a = new Arrow();
+// Arrow *a = new Arrow();
 float rotX;
 int w2;
 int wallH = 2; //the height of the wall
@@ -891,7 +891,7 @@ void display(void)
 
 
 	glFlush();
-	a->drawArrow(dir);	
+	// a->drawArrow(dir);	
 	glutSwapBuffers();
 	
 	
@@ -1304,7 +1304,7 @@ int main(int argc, char** argv)
 	ballj =m->startY;
 	updateBallMapPos();
 
-	glutCreateWindow("3GC3_Project");	//creates the window
+	glutCreateWindow("aMAZEing");	//creates the window
 
 	glutDisplayFunc(display);	//registers "display" as the display callback function
 	glutKeyboardFunc(keyboard);
